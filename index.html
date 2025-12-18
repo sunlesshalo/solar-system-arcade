@@ -1127,6 +1127,7 @@
                 this.active = true;
                 this.rotationAngle = Math.random() * Math.PI * 2;
                 this.trail = [];
+                this.hitFlash = 0; // Villanás effekt kattintáskor
             }
 
             update() {
@@ -1178,6 +1179,11 @@
                 }
 
                 this.rotationAngle += 0.05;
+
+                // Villanás effekt csökkentése
+                if (this.hitFlash > 0) {
+                    this.hitFlash--;
+                }
 
                 if (this.x < -200 || this.x > canvas.width + 200 ||
                     this.y < -200 || this.y > canvas.height + 200) {
@@ -1234,21 +1240,40 @@
                 // Üstökös mag (kisebb, pulzáló)
                 const pulsation = 0.85 + Math.sin(this.rotationAngle) * 0.15;
 
-                const nucleusGradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.type.size * 1.0);
-                nucleusGradient.addColorStop(0, `rgba(255, 255, 255, ${pulsation})`);
-                nucleusGradient.addColorStop(0.3, this.type.headColor.replace('1)', `${pulsation})`));
-                nucleusGradient.addColorStop(0.7, `rgba(${c.r}, ${c.g}, ${c.b}, ${0.5 * pulsation})`);
+                // ✨ Villanás effekt kattintáskor!
+                const flashIntensity = this.hitFlash ? (this.hitFlash / 10) : 0;
+                const flashSize = 1 + flashIntensity * 0.8;
+
+                const nucleusGradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.type.size * 1.0 * flashSize);
+                nucleusGradient.addColorStop(0, `rgba(255, 255, 255, ${Math.min(1, pulsation + flashIntensity)})`);
+                nucleusGradient.addColorStop(0.3, this.type.headColor.replace('1)', `${Math.min(1, pulsation + flashIntensity * 0.5)})`));
+                nucleusGradient.addColorStop(0.7, `rgba(${c.r}, ${c.g}, ${c.b}, ${0.5 * pulsation + flashIntensity * 0.3})`);
                 nucleusGradient.addColorStop(1, `rgba(${c.r}, ${c.g}, ${c.b}, 0)`);
 
                 ctx.fillStyle = nucleusGradient;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, this.type.size * 1.0, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, this.type.size * 1.0 * flashSize, 0, Math.PI * 2);
                 ctx.fill();
 
+                // ⚡ Extra villanás gyűrű kattintáskor
+                if (this.hitFlash > 0) {
+                    const ringGradient = ctx.createRadialGradient(
+                        this.x, this.y, this.type.size * flashSize,
+                        this.x, this.y, this.type.size * flashSize * 2
+                    );
+                    ringGradient.addColorStop(0, `rgba(255, 255, 100, ${flashIntensity * 0.8})`);
+                    ringGradient.addColorStop(1, `rgba(255, 200, 0, 0)`);
+
+                    ctx.fillStyle = ringGradient;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.type.size * flashSize * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
                 // Belső fényes központ (kisebb)
-                ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * pulsation})`;
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, 0.9 * pulsation + flashIntensity)})`;
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, 2 * flashSize, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Típus címke
@@ -1907,18 +1932,41 @@
             const now = Date.now();
             const timeSinceLastClick = now - lastClickTime;
 
-            planets.forEach(planet => {
-                if (planet.isClicked(mouseX, mouseY)) {
-                    showPlanetInfo(planet);
+            // ☄️ Üstökös kattintás - pálya módosítás!
+            let cometClicked = false;
+            comets.forEach(comet => {
+                if (!comet.active) return;
+                const distance = Math.sqrt((mouseX - comet.x) ** 2 + (mouseY - comet.y) ** 2);
+                const hitRadius = comet.type.size * 2.5; // Nagyobb hitbox könnyebb kattintáshoz
 
-                    // Dupla kattintás zoomhoz
-                    if (timeSinceLastClick < 300 && lastClickedPlanet === planet) {
-                        zoomToPlanet(planet);
-                    }
-                    lastClickedPlanet = planet;
-                    lastClickTime = now;
+                if (distance < hitRadius) {
+                    cometClicked = true;
+                    // Véletlenszerű lökés az üstökösnek!
+                    const randomAngle = Math.random() * Math.PI * 2;
+                    const randomForce = 1.0 + Math.random() * 2.0; // 1-3 erősségű lökés
+                    comet.vx += Math.cos(randomAngle) * randomForce;
+                    comet.vy += Math.sin(randomAngle) * randomForce;
+
+                    // Vizuális feedback - villanás hatás (hozzáadunk egy átmeneti pulzálást)
+                    comet.hitFlash = 10; // 10 frame-ig villódzik
                 }
             });
+
+            // 🪐 Bolygó kattintás - csak ha nem üstökösre kattintottunk
+            if (!cometClicked) {
+                planets.forEach(planet => {
+                    if (planet.isClicked(mouseX, mouseY)) {
+                        showPlanetInfo(planet);
+
+                        // Dupla kattintás zoomhoz
+                        if (timeSinceLastClick < 300 && lastClickedPlanet === planet) {
+                            zoomToPlanet(planet);
+                        }
+                        lastClickedPlanet = planet;
+                        lastClickTime = now;
+                    }
+                });
+            }
         });
 
         // Zoom functions
@@ -1972,6 +2020,40 @@
                 isPinching = true;
                 lastPinchDistance = getPinchDistance(e.touches[0], e.touches[1]);
                 e.preventDefault();
+            } else if (e.touches.length === 1) {
+                // 📱 Egy ujj = kattintás (üstökös vagy bolygó)
+                const rect = canvas.getBoundingClientRect();
+                const touchX = e.touches[0].clientX - rect.left;
+                const touchY = e.touches[0].clientY - rect.top;
+
+                // ☄️ Üstökös bökés - pálya módosítás!
+                let cometTouched = false;
+                comets.forEach(comet => {
+                    if (!comet.active) return;
+                    const distance = Math.sqrt((touchX - comet.x) ** 2 + (touchY - comet.y) ** 2);
+                    const hitRadius = comet.type.size * 3; // Még nagyobb hitbox mobilra
+
+                    if (distance < hitRadius) {
+                        cometTouched = true;
+                        // Véletlenszerű lökés az üstökösnek!
+                        const randomAngle = Math.random() * Math.PI * 2;
+                        const randomForce = 1.5 + Math.random() * 2.5; // Erősebb lökés mobilon
+                        comet.vx += Math.cos(randomAngle) * randomForce;
+                        comet.vy += Math.sin(randomAngle) * randomForce;
+
+                        // Vizuális feedback
+                        comet.hitFlash = 15; // Hosszabb villanás mobilon
+                    }
+                });
+
+                // 🪐 Bolygó bökés - csak ha nem üstökösre böktünk
+                if (!cometTouched) {
+                    planets.forEach(planet => {
+                        if (planet.isClicked(touchX, touchY)) {
+                            showPlanetInfo(planet);
+                        }
+                    });
+                }
             }
         }, { passive: false });
 
