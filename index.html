@@ -185,8 +185,8 @@
             justify-content: center;
         }
 
-        /* 📱 MOBIL OPTIMALIZÁCIÓ */
-        @media (max-width: 768px) {
+        /* 📱 MOBIL OPTIMALIZÁCIÓ - Portrait és Landscape is! */
+        @media (max-width: 768px), (max-height: 768px) and (orientation: landscape) {
             .mobile-menu-toggle {
                 display: flex;
             }
@@ -297,6 +297,44 @@
             }
         }
 
+        /* 📱 Landscape mód speciális beállítások */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .controls {
+                max-height: 65vh;
+                padding: 10px;
+            }
+
+            .controls h1 {
+                font-size: 14px;
+                margin-bottom: 6px;
+            }
+
+            .controls p {
+                font-size: 8px;
+                margin: 2px 0;
+            }
+
+            .speed-control {
+                margin-top: 6px;
+            }
+
+            button {
+                padding: 8px 12px;
+                margin: 2px;
+                font-size: 11px;
+            }
+
+            .instructions {
+                font-size: 8px;
+                padding: 5px 10px;
+                bottom: 5px;
+            }
+
+            .planet-info {
+                max-height: 60vh;
+            }
+        }
+
         /* 📱 Nagyon kicsi telefonok */
         @media (max-width: 480px) {
             .controls h1 {
@@ -392,8 +430,9 @@
             canvas.height = window.innerHeight;
         });
 
-        // 📱 Mobil eszköz detektálás
-        const isMobile = window.innerWidth <= 768;
+        // 📱 Mobil eszköz detektálás - Portrait ÉS Landscape is!
+        // A kisebb dimenziót nézzük, így landscape módban is mobilként működik
+        const isMobile = Math.min(window.innerWidth, window.innerHeight) <= 768;
         const scaleFactor = isMobile ? 2.5 : 1; // 2.5x nagyobb minden mobilon!
 
         const sun = {
