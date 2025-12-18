@@ -415,7 +415,7 @@
     </div>
 
     <div class="instructions">
-        🖱️ Dupla klikk = zoom • 🔍 Görgő = zoom • ☄️ Üstökösök • 🔥 Napkitörések • 🌌 Nebula ködök
+        🖱️ Dupla klikk = zoom • 🔍 Görgő = zoom • 📱 Csípés = zoom • ☄️ Üstökösök • 🔥 Napkitörések • 🌌 Nebula
     </div>
 
     <script>
@@ -1962,6 +1962,54 @@
                 zoomOut();
             }
         }, { passive: false });
+
+        // 📱 Pinch zoom mobilra (két ujjal csípés)
+        let lastPinchDistance = null;
+        let isPinching = false;
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                isPinching = true;
+                lastPinchDistance = getPinchDistance(e.touches[0], e.touches[1]);
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && isPinching) {
+                e.preventDefault();
+                const distance = getPinchDistance(e.touches[0], e.touches[1]);
+
+                if (lastPinchDistance && lastPinchDistance > 0) {
+                    const scale = distance / lastPinchDistance;
+                    // Zoom változtatása a csípés arány alapján
+                    targetZoom *= scale;
+                    // Korlátozás 0.5x és 5x között
+                    targetZoom = Math.max(0.5, Math.min(5, targetZoom));
+                }
+
+                lastPinchDistance = distance;
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) {
+                isPinching = false;
+                lastPinchDistance = null;
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchcancel', (e) => {
+            isPinching = false;
+            lastPinchDistance = null;
+        }, { passive: false });
+
+        // Két touch pont távolságának számítása
+        function getPinchDistance(touch1, touch2) {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
 
         function showPlanetInfo(planet) {
             document.getElementById('planetEmoji').textContent = planet.emoji;
