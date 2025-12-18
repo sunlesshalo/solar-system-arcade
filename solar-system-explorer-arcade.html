@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naprendszer Felfedező - ARCADE Mód 🎮💥</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+
+        canvas {
+            display: block;
+            background: radial-gradient(ellipse at center, #0f0f23 0%, #000000 100%);
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            border: 3px solid #ffd700;
+            color: white;
+            max-width: 300px;
+        }
+
+        .controls h1 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .controls p {
+            margin: 10px 0;
+            line-height: 1.6;
+            font-size: 13px;
+        }
+
+        button {
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 3px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(45deg, #ff7b45, #ff931e);
+        }
+
+        .planet-info {
+            position: absolute;
+            top: 50%;
+            right: 30px;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 25px;
+            border-radius: 15px;
+            border: 3px solid #4a9eff;
+            color: white;
+            max-width: 350px;
+            display: none;
+        }
+
+        .planet-info.active {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+        }
+
+        .planet-info h2 {
+            color: #4a9eff;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+
+        .planet-info .emoji {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .planet-info p {
+            margin: 8px 0;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .planet-info .fun-fact {
+            background: rgba(74, 158, 255, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #ffd700;
+        }
+
+        .speed-control {
+            margin-top: 15px;
+        }
+
+        .speed-control label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ffd700;
+        }
+
+        .speed-control input {
+            width: 100%;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4444;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: #ffd700;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="solarSystem"></canvas>
+
+    <div class="controls">
+        <h1>🎮 ARCADE MÓD 💥</h1>
+        <p>👆 Kattints bármelyik bolygóra!</p>
+        <p style="font-size: 11px; color: #ff6b35; font-weight: bold;">🔥 Gyakori üstökösök, látványos pályák, kevés becsapódás!</p>
+        <p style="font-size: 11px; color: #aaa;">✨ 3D napfény/árnyék, légköri fény, holdak, színes üstökösök, napkitörések, nebula, 💫 meteorrajok!</p>
+
+        <div class="speed-control">
+            <label>⏱️ Keringési sebesség:</label>
+            <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1">
+            <p style="text-align: center; margin-top: 5px;">
+                <span id="speedValue">1.0</span>x
+            </p>
+        </div>
+
+        <div class="speed-control">
+            <label>☄️ Üstökös gyakoriság:</label>
+            <input type="range" id="cometFrequencySlider" min="0.1" max="3" step="0.1" value="1">
+            <p style="text-align: center; margin-top: 5px;">
+                <span id="cometFrequencyValue">1.0</span>x
+            </p>
+        </div>
+
+        <div class="speed-control">
+            <label>⚡ Üstökös sebesség:</label>
+            <input type="range" id="cometSpeedSlider" min="0.5" max="2.5" step="0.1" value="1">
+            <p style="text-align: center; margin-top: 5px;">
+                <span id="cometSpeedValue">1.0</span>x
+            </p>
+        </div>
+
+        <button onclick="toggleLabels()">🏷️ Feliratok</button>
+        <button onclick="toggleOrbits()">⭕ Pályák</button>
+        <button onclick="toggleMoons()">🌙 Holdak</button>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffd700;">
+            <p style="color: #ffd700; font-size: 12px; margin-bottom: 5px;">🔍 Zoom:</p>
+            <button onclick="zoomIn()">🔍 +</button>
+            <button onclick="zoomOut()">🔍 -</button>
+            <button onclick="resetZoom()">↺ Reset</button>
+            <p style="font-size: 10px; color: #aaa; margin-top: 5px;">💡 Dupla kattintás bolygóra = zoom</p>
+        </div>
+    </div>
+
+    <div class="planet-info" id="planetInfo">
+        <button class="close-btn" onclick="closePlanetInfo()">×</button>
+        <div class="emoji" id="planetEmoji"></div>
+        <h2 id="planetName"></h2>
+        <div id="planetDetails"></div>
+    </div>
+
+    <div class="instructions">
+        🖱️ Dupla klikk = zoom • 🔍 Görgő = zoom • ☄️ Üstökösök • 🔥 Napkitörések • 🌌 Nebula ködök
+    </div>
+
+    <script>
+        const canvas = document.getElementById('solarSystem');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        const sun = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 30
+        };
+
+        // ARCADE MÓD - EXTRÉM erős gravitáció! 🎮💥
+        // G = gravitációs állandó (a szimulációnkhoz skálázva)
+        const G = 0.7; // Erősebb gravitációs mező! (0.5 -> 0.7)
+
+        // Testek tömegei - ARCADE MÓD: Bolygók EXTRÉM erősebbek! 💪🔥
+        // A Nap még mindig a legerősebb, de a bolygók DRÁMAIAN elhajítják az üstökösöket!
+        const sunMass = 1000;  // Nap (referencia) - továbbra is a legerősebb
+        const planetMasses = {
+            'Jupiter': 45.0,       // ÓRIÁSI gravitációs mező! 🌪️⚡
+            'Szaturnusz': 28.0,    // Gyűrűs óriás HATALMAS ereje!
+            'Neptunusz': 15.0,     // Jégóriás EXTRÉM ereje!
+            'Uránusz': 15.0,       // Jégóriás EXTRÉM ereje!
+            'Föld': 4.0,           // Kis, de NAGYON erős! 🌍💪
+            'Vénusz': 4.0,         // Kis, de NAGYON erős!
+            'Mars': 2.0,           // Vörös ragadozó DUPLA erővel!
+            'Merkúr': 1.0,         // Gyors kis harcos DUPLA erővel!
+            'Plútó': 0.5           // Törpe, de VESZÉLYES! ❄️
+        };
+
+        let orbitSpeed = 1;
+        let cometFrequency = 1;
+        let cometSpeed = 1;
+        let showLabels = true;
+        let showOrbits = true;
+        let showMoons = true;
+
+        // Bolygók adatai érdekes tényekkel gyerekeknek
+        // Az excentricitás (eccentricity) értékek valósak - így ellipszis alakúak a pályák!
+        // Az inclination (dőlésszög) mutatja, hogy a pálya mennyire dől meg az ekliptika síkjához képest
+        const planetsData = [
+            {
+                name: 'Merkúr',
+                emoji: '☿️',
+                color: '#8c7853',
+                size: 4,
+                orbitRadius: 80,
+                speed: 0.04,
+                rotationSpeed: 0.01,
+                eccentricity: 0.2056,  // A legelliptikusabb pálya a belső bolygók közül!
+                inclination: 7.0,      // Nagyon megdől! 7 fok
+                facts: {
+                    distance: '57,9 millió km a Naptól',
+                    dayLength: '59 földi nap',
+                    funFact: '🔥 A Merkúr a leggyorsabb bolygó, mindössze 88 nap alatt kerüli meg a Napot! Nappal szuper forró (430°C), éjszaka meg fagyos hideg (-180°C)!'
+                }
+            },
+            {
+                name: 'Vénusz',
+                emoji: '♀️',
+                color: '#ffc649',
+                size: 9,
+                orbitRadius: 120,
+                speed: 0.015,
+                rotationSpeed: -0.005,
+                eccentricity: 0.0068,  // Majdnem tökéletes kör!
+                inclination: 3.4,      // Kis dőlés
+                facts: {
+                    distance: '108,2 millió km a Naptól',
+                    dayLength: '243 földi nap',
+                    funFact: '🌋 A Vénusz a legforróbb bolygó a sűrű, mérgező felhői miatt! Visszafelé forog a Földhöz képest, és savat esik rajta!'
+                }
+            },
+            {
+                name: 'Föld',
+                emoji: '🌍',
+                color: '#4a9eff',
+                size: 10,
+                orbitRadius: 160,
+                speed: 0.01,
+                rotationSpeed: 0.05,
+                eccentricity: 0.0167,  // Kis ellipszis
+                inclination: 0.0,      // Referencia sík - 0 fok!
+                moons: [
+                    { name: 'Hold', size: 2.5, distance: 18, speed: 0.02, color: '#c0c0c0' }
+                ],
+                facts: {
+                    distance: '149,6 millió km a Naptól',
+                    dayLength: '24 óra',
+                    funFact: '💙 A Föld az egyetlen bolygó, ahol folyékony víz és élet van! A 70%-a óceánokkal borított. Van egy holdja, ami az árapályt okozza!'
+                }
+            },
+            {
+                name: 'Mars',
+                emoji: '♂️',
+                color: '#ff6b35',
+                size: 5,
+                orbitRadius: 200,
+                speed: 0.008,
+                rotationSpeed: 0.048,
+                eccentricity: 0.0934,  // Elég elliptikus!
+                inclination: 1.9,      // Kis dőlés
+                facts: {
+                    distance: '227,9 millió km a Naptól',
+                    dayLength: '24,6 óra',
+                    funFact: '🔴 A Marsot Vörös Bolygónak hívják a rozsdás vas miatt a talajában! A Naprendszer legnagyobb vulkánja van rajta - az Olympus Mons, 3-szor magasabb, mint a Mount Everest!'
+                }
+            },
+            {
+                name: 'Jupiter',
+                emoji: '♃',
+                color: '#c88b3a',
+                size: 22,
+                orbitRadius: 280,
+                speed: 0.002,
+                rotationSpeed: 0.1,
+                eccentricity: 0.0484,
+                inclination: 1.3,
+                moons: [
+                    { name: 'Io', size: 2, distance: 30, speed: 0.05, color: '#ffeb3b' },
+                    { name: 'Europa', size: 2, distance: 35, speed: 0.04, color: '#e3f2fd' },
+                    { name: 'Ganymede', size: 2.5, distance: 40, speed: 0.03, color: '#90a4ae' },
+                    { name: 'Callisto', size: 2, distance: 45, speed: 0.025, color: '#795548' }
+                ],
+                facts: {
+                    distance: '778,5 millió km a Naptól',
+                    dayLength: '10 óra',
+                    funFact: '🌪️ A Jupiter ÓRIÁSI - 1300 Föld férne bele! A Nagy Vörös Folt egy hatalmas vihar, nagyobb mint a Föld, és már 400 éve tombol! 79 holdja van!'
+                }
+            },
+            {
+                name: 'Szaturnusz',
+                emoji: '♄',
+                color: '#fad5a5',
+                size: 18,
+                orbitRadius: 360,
+                speed: 0.0009,
+                rotationSpeed: 0.095,
+                eccentricity: 0.0539,
+                inclination: 2.5,
+                hasRings: true,
+                moons: [
+                    { name: 'Titán', size: 2.5, distance: 35, speed: 0.03, color: '#ff9800' }
+                ],
+                facts: {
+                    distance: '1,4 milliárd km a Naptól',
+                    dayLength: '10,7 óra',
+                    funFact: '💍 A Szaturnusznak gyönyörű gyűrűi vannak jégből és kőzetből! Olyan könnyű, hogy úszna a vízen (ha lenne elég nagy fürdőkád). 82 holdja van!'
+                }
+            },
+            {
+                name: 'Uránusz',
+                emoji: '♅',
+                color: '#4fd0e7',
+                size: 12,
+                orbitRadius: 420,
+                speed: 0.0004,
+                rotationSpeed: 0.07,
+                eccentricity: 0.0473,
+                inclination: 0.8,
+                facts: {
+                    distance: '2,9 milliárd km a Naptól',
+                    dayLength: '17 óra',
+                    funFact: '🧊 Az Uránusz az oldalára dőlt és gurul, mint egy labda! Jégóriás, felhői rohadt tojás szagúak. Brutál hideg (-224°C)!'
+                }
+            },
+            {
+                name: 'Neptunusz',
+                emoji: '♆',
+                color: '#4169e1',
+                size: 12,
+                orbitRadius: 480,
+                speed: 0.0001,
+                rotationSpeed: 0.065,
+                eccentricity: 0.0086,  // Majdnem tökéletes kör!
+                inclination: 1.8,
+                facts: {
+                    distance: '4,5 milliárd km a Naptól',
+                    dayLength: '16 óra',
+                    funFact: '💨 A Neptunuszon vannak a Naprendszer legerősebb szelei - akár 2000 km/h! Sötét, hideg, és van rajta egy nagy sötét folt, mint a Jupiteren. 165 évig tart megkerülni a Napot!'
+                }
+            },
+            {
+                name: 'Plútó',
+                emoji: '🪐',
+                color: '#8b7355',
+                size: 3,
+                orbitRadius: 540,
+                speed: 0.00005,
+                rotationSpeed: 0.02,
+                eccentricity: 0.249,  // NAGYON elliptikus pálya!
+                inclination: 17.0,    // EXTRÉM megdől! 17 fok!
+                isDwarf: true,
+                facts: {
+                    distance: '5,9 milliárd km a Naptól',
+                    dayLength: '6,4 földi nap',
+                    funFact: '❄️ A Plútó egy törpe bolygó, de nagyon érdekes! Jégből van, és olyan hideg rajta (-230°C), hogy a levegő befagy! 2006-ig még "igazi" bolygónak számított.'
+                }
+            }
+        ];
+
+        // Moon class
+        class Moon {
+            constructor(planet, data) {
+                this.planet = planet;
+                this.name = data.name;
+                this.size = data.size;
+                this.distance = data.distance;
+                this.speed = data.speed;
+                this.color = data.color;
+                this.angle = Math.random() * Math.PI * 2;
+            }
+
+            update(speedMultiplier) {
+                this.angle += this.speed * speedMultiplier;
+            }
+
+            draw() {
+                if (!showMoons) return;
+
+                const planetPos = this.planet.getPosition();
+                const x = planetPos.x + Math.cos(this.angle) * this.distance;
+                const y = planetPos.y + Math.sin(this.angle) * this.distance;
+
+                // Draw moon orbit
+                if (showOrbits) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.arc(planetPos.x, planetPos.y, this.distance, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Draw moon
+                const gradient = ctx.createRadialGradient(x - this.size/3, y - this.size/3, 0, x, y, this.size);
+                gradient.addColorStop(0, this.lightenColor(this.color, 50));
+                gradient.addColorStop(1, this.color);
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Label
+                if (showLabels && this.size > 2) {
+                    ctx.fillStyle = '#aaa';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.name, x, y + this.size + 10);
+                }
+            }
+
+            lightenColor(color, percent) {
+                const num = parseInt(color.replace('#', ''), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = (num >> 16) + amt;
+                const G = (num >> 8 & 0x00FF) + amt;
+                const B = (num & 0x0000FF) + amt;
+                return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                    (B < 255 ? B < 1 ? 0 : B : 255))
+                    .toString(16).slice(1);
+            }
+        }
+
+        // Planet class
+        class Planet {
+            constructor(data) {
+                this.name = data.name;
+                this.emoji = data.emoji;
+                this.color = data.color;
+                this.size = data.size;
+                this.orbitRadius = data.orbitRadius; // Ez a fél-nagyosztengely (semi-major axis)
+                this.speed = data.speed;
+                this.rotationSpeed = data.rotationSpeed || 0.05;
+                this.eccentricity = data.eccentricity || 0; // Ellipszis lapítottsága
+                this.inclination = (data.inclination || 0) * Math.PI / 180; // Pálya dőlése radiánban (3D!)
+                this.angle = Math.random() * Math.PI * 2;
+                this.rotation = 0;
+                this.hasRings = data.hasRings || false;
+                this.isDwarf = data.isDwarf || false;
+                this.facts = data.facts;
+                this.moons = [];
+
+                // Ellipszis paraméterei (Kepler törvények szerint)
+                this.a = this.orbitRadius; // fél-nagyosztengely
+                this.b = this.a * Math.sqrt(1 - this.eccentricity * this.eccentricity); // fél-kisosztengely
+                this.c = this.a * this.eccentricity; // Nap távolsága a középponttól (fókusz)
+
+                if (data.moons) {
+                    data.moons.forEach(moonData => {
+                        this.moons.push(new Moon(this, moonData));
+                    });
+                }
+            }
+
+            update(speedMultiplier) {
+                // Kepler 2. törvénye: változó sebesség a távolság függvényében
+                const pos = this.getPosition();
+                const distanceToSun = Math.sqrt((pos.x - sun.x) ** 2 + (pos.y - sun.y) ** 2);
+
+                // Gyorsabban mozog, ha közelebb van a Naphoz (fordítottan arányos a távolsággal)
+                const speedFactor = this.orbitRadius / distanceToSun;
+                this.angle += this.speed * speedMultiplier * speedFactor;
+
+                this.rotation += this.rotationSpeed * speedMultiplier;
+                this.moons.forEach(moon => moon.update(speedMultiplier));
+            }
+
+            getPosition() {
+                // Ellipszis egyenlet 3D-ben, ahol a Nap az egyik fókuszpontban van
+                // Parametrikus ellipszis egyenlet
+                const x0 = this.a * Math.cos(this.angle); // Ellipszis X koordináta (középpont körül)
+                const y0 = this.b * Math.sin(this.angle); // Ellipszis Y koordináta (középpont körül)
+
+                // 3D: pálya dőlése miatt z koordináta (mélység/magasság az ekliptika síkjához képest)
+                // A z érték változik a pálya mentén (sin függvénnyel)
+                const z = y0 * Math.sin(this.inclination);
+
+                // Az Y koordinátát módosítjuk a dőlés miatt (perspektíva)
+                const y_adjusted = y0 * Math.cos(this.inclination);
+
+                // Eltoljuk úgy, hogy a Nap az egyik fókuszban legyen (nem a középpontban)
+                // A z koordinátát perspektívává alakítjuk: távolabbi objektumok feljebb jelennek meg
+                const perspective = 1.0; // Perspektíva erőssége (MEGNÖVELTÜK 0.3-ról 1.0-ra!)
+                return {
+                    x: sun.x + x0 - this.c,
+                    y: sun.y + y_adjusted - z * perspective,
+                    z: z  // 3D mélység (később használjuk)
+                };
+            }
+
+            draw() {
+                const pos = this.getPosition();
+
+                // Draw orbit path - IGAZI 3D ellipszis, Nap az egyik fókuszban, megdőlt síkban!
+                if (showOrbits) {
+                    ctx.strokeStyle = this.isDwarf ? 'rgba(139, 115, 85, 0.15)' : 'rgba(255, 255, 255, 0.1)';
+                    ctx.lineWidth = this.isDwarf ? 1 : 1;
+                    if (this.isDwarf) {
+                        ctx.setLineDash([5, 5]);
+                    }
+
+                    // 3D ellipszis rajzolása pontokkal (figyelembe veszi a dőlést)
+                    ctx.beginPath();
+                    const steps = 100;
+                    for (let i = 0; i <= steps; i++) {
+                        const angle = (i / steps) * Math.PI * 2;
+                        const x0 = this.a * Math.cos(angle);
+                        const y0 = this.b * Math.sin(angle);
+
+                        // 3D transzformáció (dőlés miatt)
+                        const z = y0 * Math.sin(this.inclination);
+                        const y_adjusted = y0 * Math.cos(this.inclination);
+
+                        const perspective = 1.0; // Ugyanaz, mint a getPosition-ben
+                        const px = sun.x + x0 - this.c;
+                        const py = sun.y + y_adjusted - z * perspective;
+
+                        if (i === 0) {
+                            ctx.moveTo(px, py);
+                        } else {
+                            ctx.lineTo(px, py);
+                        }
+                    }
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                // 3D mélység alapú méret és átlátszóság (ERŐSEBB HATÁS!)
+                // Ha a bolygó "hátrébb" van (negatív z), kisebb és halványabb
+                const depthScale = 1 - (pos.z / (this.orbitRadius * 2)) * 0.3; // Max 30% méretváltozás (volt 15%)
+                const depthAlpha = 1 - Math.abs(pos.z / (this.orbitRadius * 2)) * 0.35; // Max 35% átlátszóság változás (volt 20%)
+                const adjustedSize = this.size * depthScale;
+
+                // 3D Atmospheric glow (csak nagyobb bolygóknak)
+                if (this.size > 6) {
+                    const glowGradient = ctx.createRadialGradient(pos.x, pos.y, adjustedSize, pos.x, pos.y, adjustedSize * 1.5);
+                    glowGradient.addColorStop(0, `${this.color}00`);
+                    glowGradient.addColorStop(0.7, `${this.color}33`);
+                    glowGradient.addColorStop(1, `${this.color}00`);
+
+                    ctx.fillStyle = glowGradient;
+                    ctx.globalAlpha = depthAlpha;
+                    ctx.beginPath();
+                    ctx.arc(pos.x, pos.y, adjustedSize * 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                }
+
+                // Napfény iránya (Nap felé)
+                const sunAngle = Math.atan2(sun.y - pos.y, sun.x - pos.x);
+
+                ctx.save();
+                ctx.translate(pos.x, pos.y);
+                ctx.rotate(this.rotation);
+                ctx.globalAlpha = depthAlpha; // 3D mélység alapú átlátszóság
+
+                // 3D gömb effekt - napfénnyel és árnyékkal
+                const lightX = Math.cos(sunAngle - this.rotation) * adjustedSize * 0.4;
+                const lightY = Math.sin(sunAngle - this.rotation) * adjustedSize * 0.4;
+
+                // Fő gömb gradiens (3D sphere)
+                const sphereGradient = ctx.createRadialGradient(
+                    lightX, lightY, adjustedSize * 0.1,
+                    0, 0, adjustedSize * 1.2
+                );
+
+                // Napfényes oldal (világos)
+                sphereGradient.addColorStop(0, this.lightenColor(this.color, 60));
+                sphereGradient.addColorStop(0.3, this.lightenColor(this.color, 30));
+                sphereGradient.addColorStop(0.5, this.color);
+
+                // Árnyékos oldal (sötét)
+                const darkenedColor = this.darkenColor(this.color, 40);
+                sphereGradient.addColorStop(0.8, darkenedColor);
+                sphereGradient.addColorStop(1, this.darkenColor(this.color, 60));
+
+                ctx.fillStyle = sphereGradient;
+                ctx.beginPath();
+                ctx.arc(0, 0, adjustedSize, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Árnyék a Naptól ellenkező oldalon (3D depth)
+                const shadowGradient = ctx.createRadialGradient(
+                    -lightX * 0.5, -lightY * 0.5, adjustedSize * 0.3,
+                    -lightX * 0.8, -lightY * 0.8, adjustedSize * 0.9
+                );
+                shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+                shadowGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.3)');
+                shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
+
+                ctx.fillStyle = shadowGradient;
+                ctx.beginPath();
+                ctx.arc(0, 0, adjustedSize, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Fény visszaverődés (specular highlight)
+                if (adjustedSize > 8) {
+                    const highlightGradient = ctx.createRadialGradient(
+                        lightX * 0.6, lightY * 0.6, 0,
+                        lightX * 0.6, lightY * 0.6, adjustedSize * 0.3
+                    );
+                    highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+                    highlightGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.15)');
+                    highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                    ctx.fillStyle = highlightGradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, adjustedSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Texture lines (subtle, 3D-aware)
+                if (adjustedSize > 8) {
+                    ctx.strokeStyle = `rgba(0, 0, 0, 0.08)`;
+                    ctx.lineWidth = 0.8;
+                    for (let i = -1; i <= 1; i++) {
+                        ctx.beginPath();
+                        const yPos = i * adjustedSize / 3;
+                        const xWidth = Math.sqrt(adjustedSize * adjustedSize - yPos * yPos);
+                        ctx.moveTo(-xWidth, yPos);
+                        ctx.lineTo(xWidth, yPos);
+                        ctx.stroke();
+                    }
+                }
+
+                ctx.globalAlpha = 1.0; // Visszaállítjuk
+                ctx.restore();
+
+                // Draw rings for Saturn (3D effect with depth)
+                if (this.hasRings) {
+                    ctx.globalAlpha = depthAlpha; // 3D mélység hatás a gyűrűkre is
+
+                    // Hátsó gyűrű (árnyékosabb)
+                    const backRingGradient = ctx.createLinearGradient(
+                        pos.x - adjustedSize * 2.2, pos.y,
+                        pos.x + adjustedSize * 2.2, pos.y
+                    );
+                    backRingGradient.addColorStop(0, 'rgba(180, 150, 100, 0.2)');
+                    backRingGradient.addColorStop(0.5, 'rgba(200, 170, 120, 0.4)');
+                    backRingGradient.addColorStop(1, 'rgba(180, 150, 100, 0.2)');
+
+                    ctx.strokeStyle = backRingGradient;
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.ellipse(pos.x, pos.y, adjustedSize * 2.2, adjustedSize * 0.7, 0, Math.PI, Math.PI * 2);
+                    ctx.stroke();
+
+                    // Elülső gyűrű (fényesebb)
+                    const frontRingGradient = ctx.createLinearGradient(
+                        pos.x - adjustedSize * 2.2, pos.y,
+                        pos.x + adjustedSize * 2.2, pos.y
+                    );
+                    frontRingGradient.addColorStop(0, 'rgba(250, 213, 165, 0.4)');
+                    frontRingGradient.addColorStop(0.3, 'rgba(250, 213, 165, 0.8)');
+                    frontRingGradient.addColorStop(0.5, 'rgba(255, 230, 180, 0.9)');
+                    frontRingGradient.addColorStop(0.7, 'rgba(250, 213, 165, 0.8)');
+                    frontRingGradient.addColorStop(1, 'rgba(250, 213, 165, 0.4)');
+
+                    ctx.strokeStyle = frontRingGradient;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.ellipse(pos.x, pos.y, adjustedSize * 1.8, adjustedSize * 0.5, 0, 0, Math.PI);
+                    ctx.stroke();
+
+                    // Belső gyűrű részlet
+                    ctx.strokeStyle = 'rgba(255, 240, 200, 0.6)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.ellipse(pos.x, pos.y, adjustedSize * 1.5, adjustedSize * 0.4, 0, 0, Math.PI);
+                    ctx.stroke();
+
+                    // Árnyék a gyűrűn
+                    const ringAngle = Math.atan2(pos.y - sun.y, pos.x - sun.x);
+                    const shadowX = pos.x + Math.cos(ringAngle + Math.PI) * adjustedSize * 0.3;
+                    const shadowY = pos.y + Math.sin(ringAngle + Math.PI) * adjustedSize * 0.1;
+
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.ellipse(shadowX, shadowY, adjustedSize * 1.5, adjustedSize * 0.4, 0, 0, Math.PI);
+                    ctx.stroke();
+
+                    ctx.globalAlpha = 1.0; // Visszaállítjuk
+                }
+
+                // Draw label
+                if (showLabels) {
+                    ctx.fillStyle = this.isDwarf ? '#8b7355' : '#fff';
+                    ctx.font = this.isDwarf ? '10px Arial' : 'bold 12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.globalAlpha = depthAlpha; // Címke is halványabb, ha a bolygó távolabb van
+                    ctx.fillText(this.name, pos.x, pos.y + adjustedSize + 15);
+                    ctx.globalAlpha = 1.0;
+                }
+
+                // Draw moons
+                this.moons.forEach(moon => moon.draw());
+            }
+
+            lightenColor(color, percent) {
+                const num = parseInt(color.replace('#', ''), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = (num >> 16) + amt;
+                const G = (num >> 8 & 0x00FF) + amt;
+                const B = (num & 0x0000FF) + amt;
+                return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                    (B < 255 ? B < 1 ? 0 : B : 255))
+                    .toString(16).slice(1);
+            }
+
+            darkenColor(color, percent) {
+                const num = parseInt(color.replace('#', ''), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = Math.max(0, (num >> 16) - amt);
+                const G = Math.max(0, (num >> 8 & 0x00FF) - amt);
+                const B = Math.max(0, (num & 0x0000FF) - amt);
+                return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+            }
+
+            isClicked(mouseX, mouseY) {
+                const pos = this.getPosition();
+                // 3D mélység alapú méret számítás kattintáshoz is
+                const depthScale = 1 - (pos.z / (this.orbitRadius * 2)) * 0.3; // Ugyanaz, mint a draw()-ban
+                const adjustedSize = this.size * depthScale;
+                const distance = Math.sqrt((mouseX - pos.x) ** 2 + (mouseY - pos.y) ** 2);
+                return distance < adjustedSize + 5;
+            }
+        }
+
+        // Asteroid class
+        class Asteroid {
+            constructor() {
+                this.angle = Math.random() * Math.PI * 2;
+                this.orbitRadius = 230 + Math.random() * 30; // Between Mars and Jupiter
+                this.speed = 0.003 + Math.random() * 0.002;
+                this.size = 0.5 + Math.random() * 1.5;
+                this.color = `rgba(${100 + Math.random() * 50}, ${100 + Math.random() * 50}, ${80 + Math.random() * 40}, 0.6)`;
+            }
+
+            update(speedMultiplier) {
+                this.angle += this.speed * speedMultiplier;
+            }
+
+            draw() {
+                const x = sun.x + Math.cos(this.angle) * this.orbitRadius;
+                const y = sun.y + Math.sin(this.angle) * this.orbitRadius;
+
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(x, y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Comet types
+        const cometTypes = {
+            ice: {
+                name: 'Jégüstökös',
+                color: { r: 100, g: 200, b: 255 },
+                headColor: 'rgba(200, 230, 255, 1)',
+                speed: 3,
+                size: 8,
+                tailLength: 80,
+                rarity: 0.4
+            },
+            dust: {
+                name: 'Porüstökös',
+                color: { r: 255, g: 200, b: 100 },
+                headColor: 'rgba(255, 230, 150, 1)',
+                speed: 2.5,
+                size: 10,
+                tailLength: 100,
+                rarity: 0.3
+            },
+            green: {
+                name: 'Zöld üstökös',
+                color: { r: 100, g: 255, b: 150 },
+                headColor: 'rgba(150, 255, 180, 1)',
+                speed: 3.5,
+                size: 7,
+                tailLength: 70,
+                rarity: 0.15
+            },
+            rare: {
+                name: 'Ritka üstökös',
+                color: { r: 255, g: 100, b: 255 },
+                headColor: 'rgba(255, 150, 255, 1)',
+                speed: 4,
+                size: 12,
+                tailLength: 120,
+                rarity: 0.1
+            },
+            fast: {
+                name: 'Gyors üstökös',
+                color: { r: 255, g: 255, b: 255 },
+                headColor: 'rgba(255, 255, 255, 1)',
+                speed: 5,
+                size: 6,
+                tailLength: 60,
+                rarity: 0.05
+            }
+        };
+
+        // Comet class
+        class Comet {
+            constructor() {
+                this.reset();
+                this.rotationAngle = Math.random() * Math.PI * 2; // Pulzáláshoz (6. pont)
+            }
+
+            reset() {
+                // Véletlenszerű típus kiválasztása súlyozással
+                const rand = Math.random();
+                let cumulative = 0;
+                for (const [key, type] of Object.entries(cometTypes)) {
+                    cumulative += type.rarity;
+                    if (rand < cumulative) {
+                        this.type = type;
+                        this.typeName = key;
+                        break;
+                    }
+                }
+                if (!this.type) this.type = cometTypes.ice;
+
+                // Az üstökös a képernyő szélén indul
+                const side = Math.floor(Math.random() * 4);
+                if (side === 0) { // top
+                    this.x = Math.random() * canvas.width;
+                    this.y = -50;
+                } else if (side === 1) { // right
+                    this.x = canvas.width + 50;
+                    this.y = Math.random() * canvas.height;
+                } else if (side === 2) { // bottom
+                    this.x = Math.random() * canvas.width;
+                    this.y = canvas.height + 50;
+                } else { // left
+                    this.x = -50;
+                    this.y = Math.random() * canvas.height;
+                }
+
+                // ARCADE MÓD: Kevesebb napba ütközés! 🎯
+                // Nagyobb szögeltérés és gyorsabb sebesség = kevesebb becsapódás
+                const angleToSun = Math.atan2(sun.y - this.y, sun.x - this.x);
+                const angleVariation = (Math.random() - 0.5) * 1.8; // Nagyobb eltérés (0.8 -> 1.8)
+                const finalAngle = angleToSun + angleVariation;
+
+                const speed = (2.5 + Math.random() * 3.5) * cometSpeed; // Gyorsabb! (1-4 -> 2.5-6)
+                this.vx = Math.cos(finalAngle) * speed;
+                this.vy = Math.sin(finalAngle) * speed;
+
+                this.active = true;
+                this.rotationAngle = Math.random() * Math.PI * 2;
+                this.trail = [];
+            }
+
+            update() {
+                if (!this.active) return null;
+
+                // Nap gravitációja
+                const dx_sun = sun.x - this.x;
+                const dy_sun = sun.y - this.y;
+                const distance_sun = Math.sqrt(dx_sun * dx_sun + dy_sun * dy_sun);
+
+                // ARCADE MÓD: Kisebb ütközési zóna = kevesebb becsapódás! 🎯
+                if (distance_sun < sun.radius + 5) { // Kisebb zóna (20 -> 5)
+                    this.active = false;
+                    return new Explosion(this.x, this.y, this.type);
+                }
+
+                const gravity_sun = (G * sunMass) / (distance_sun * distance_sun);
+                let ax = (dx_sun / distance_sun) * gravity_sun;
+                let ay = (dy_sun / distance_sun) * gravity_sun;
+
+                // Bolygók gravitációja - ARCADE MÓD: SZUPER erős hatás! 🎯💪
+                const PLANET_GRAVITY_MULTIPLIER = 6.0; // Bolygók 6x erősebben húzzák az üstökösöket!
+                planets.forEach(planet => {
+                    const pos = planet.getPosition();
+                    const dx = pos.x - this.x;
+                    const dy = pos.y - this.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance > 10) {
+                        const planetMass = planetMasses[planet.name] || 0.0001;
+                        // Extra erős gravitáció a bolygóktól!
+                        const gravity_planet = (G * planetMass * PLANET_GRAVITY_MULTIPLIER) / (distance * distance);
+                        ax += (dx / distance) * gravity_planet;
+                        ay += (dy / distance) * gravity_planet;
+                    }
+                });
+
+                this.vx += ax;
+                this.vy += ay;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Csóva frissítése - hosszú dinamikus nyomvonal!
+                this.trail.push({ x: this.x, y: this.y });
+                const MAX_TRAIL = 150;
+                if (this.trail.length > MAX_TRAIL) {
+                    this.trail.shift();
+                }
+
+                this.rotationAngle += 0.05;
+
+                if (this.x < -200 || this.x > canvas.width + 200 ||
+                    this.y < -200 || this.y > canvas.height + 200) {
+                    this.active = false;
+                }
+            }
+
+            draw() {
+                if (!this.active) return;
+
+                const c = this.type.color;
+
+                // Vékony, hosszú csóva rajzolása!
+                for (let i = 0; i < this.trail.length; i++) {
+                    const t = i / this.trail.length;
+                    const pos = this.trail[i];
+
+                    const alpha = t * 0.7;
+                    const size = t * this.type.size * 0.6;
+
+                    // Vékony külső ragyogás
+                    const outerGradient = ctx.createRadialGradient(
+                        pos.x, pos.y, 0,
+                        pos.x, pos.y, size * 1.5
+                    );
+                    outerGradient.addColorStop(0, `rgba(${c.r}, ${c.g}, ${c.b}, ${alpha * 0.8})`);
+                    outerGradient.addColorStop(0.5, `rgba(${c.r}, ${c.g}, ${c.b}, ${alpha * 0.4})`);
+                    outerGradient.addColorStop(1, `rgba(${c.r}, ${c.g}, ${c.b}, 0)`);
+
+                    ctx.fillStyle = outerGradient;
+                    ctx.beginPath();
+                    ctx.arc(pos.x, pos.y, size * 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Vékony belső vonal
+                    ctx.fillStyle = `rgba(${c.r}, ${c.g}, ${c.b}, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(pos.x, pos.y, size * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Köd a mag körül (kisebb)
+                const comaSize = 18;
+                const comaGradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, comaSize);
+                comaGradient.addColorStop(0, `rgba(${c.r}, ${c.g}, ${c.b}, 0.5)`);
+                comaGradient.addColorStop(0.5, `rgba(${c.r}, ${c.g}, ${c.b}, 0.3)`);
+                comaGradient.addColorStop(1, `rgba(${c.r}, ${c.g}, ${c.b}, 0)`);
+
+                ctx.fillStyle = comaGradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, comaSize, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Üstökös mag (kisebb, pulzáló)
+                const pulsation = 0.85 + Math.sin(this.rotationAngle) * 0.15;
+
+                const nucleusGradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.type.size * 1.0);
+                nucleusGradient.addColorStop(0, `rgba(255, 255, 255, ${pulsation})`);
+                nucleusGradient.addColorStop(0.3, this.type.headColor.replace('1)', `${pulsation})`));
+                nucleusGradient.addColorStop(0.7, `rgba(${c.r}, ${c.g}, ${c.b}, ${0.5 * pulsation})`);
+                nucleusGradient.addColorStop(1, `rgba(${c.r}, ${c.g}, ${c.b}, 0)`);
+
+                ctx.fillStyle = nucleusGradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.type.size * 1.0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Belső fényes központ (kisebb)
+                ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * pulsation})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Típus címke
+                if (showLabels && (this.typeName === 'rare' || this.typeName === 'fast')) {
+                    ctx.fillStyle = this.type.headColor;
+                    ctx.font = 'bold 11px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.type.name, this.x, this.y - this.type.size - 8);
+                }
+            }
+        }
+
+        // Explosion class (amikor üstökös becsapódik a Napba)
+        class Explosion {
+            constructor(x, y, cometType) {
+                this.x = x;
+                this.y = y;
+                this.particles = [];
+                this.life = 0;
+                this.maxLife = 60;
+                this.cometColor = cometType ? cometType.color : { r: 255, g: 200, b: 100 };
+
+                // Robbanás részecskék
+                for (let i = 0; i < 30; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 1 + Math.random() * 4;
+                    this.particles.push({
+                        x: this.x,
+                        y: this.y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        size: 2 + Math.random() * 4,
+                        life: 0
+                    });
+                }
+            }
+
+            update() {
+                this.life++;
+                this.particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vx *= 0.95; // Lassul
+                    p.vy *= 0.95;
+                    p.life++;
+                });
+                return this.life < this.maxLife;
+            }
+
+            draw() {
+                const c = this.cometColor;
+                this.particles.forEach(p => {
+                    const alpha = 1 - (p.life / this.maxLife);
+
+                    // Külső ragyogás
+                    const outerGradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+                    outerGradient.addColorStop(0, `rgba(255, 255, 100, ${alpha})`);
+                    outerGradient.addColorStop(0.5, `rgba(${c.r}, ${c.g}, ${c.b}, ${alpha * 0.7})`);
+                    outerGradient.addColorStop(1, `rgba(${c.r}, ${c.g}, ${c.b}, 0)`);
+
+                    ctx.fillStyle = outerGradient;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Belső mag
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // Központi villanás
+                if (this.life < 10) {
+                    const flashAlpha = 1 - (this.life / 10);
+                    const flashGradient = ctx.createRadialGradient(
+                        this.x, this.y, 0,
+                        this.x, this.y, 30
+                    );
+                    flashGradient.addColorStop(0, `rgba(255, 255, 255, ${flashAlpha})`);
+                    flashGradient.addColorStop(0.5, `rgba(255, 200, 0, ${flashAlpha * 0.7})`);
+                    flashGradient.addColorStop(1, `rgba(255, 100, 0, 0)`);
+
+                    ctx.fillStyle = flashGradient;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 30, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Solar Flare class
+        class SolarFlare {
+            constructor() {
+                this.angle = Math.random() * Math.PI * 2;
+                this.length = 0;
+                this.maxLength = 40 + Math.random() * 60;
+                this.width = 3 + Math.random() * 5;
+                this.speed = 2 + Math.random() * 3;
+                this.life = 0;
+                this.maxLife = 30 + Math.random() * 40;
+                this.color = Math.random() > 0.5 ?
+                    { r: 255, g: 150, b: 0 } :
+                    { r: 255, g: 200, b: 50 };
+            }
+
+            update() {
+                this.life++;
+                if (this.life < this.maxLife * 0.3) {
+                    this.length += this.speed;
+                } else {
+                    this.length -= this.speed * 0.5;
+                }
+                return this.life < this.maxLife && this.length > 0;
+            }
+
+            draw() {
+                const startX = sun.x + Math.cos(this.angle) * sun.radius;
+                const startY = sun.y + Math.sin(this.angle) * sun.radius;
+                const endX = sun.x + Math.cos(this.angle) * (sun.radius + this.length);
+                const endY = sun.y + Math.sin(this.angle) * (sun.radius + this.length);
+
+                const alpha = 1 - (this.life / this.maxLife);
+
+                // Fényes mag
+                const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+                gradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${alpha})`);
+                gradient.addColorStop(0.5, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${alpha * 0.7})`);
+                gradient.addColorStop(1, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`);
+
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = this.width;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+
+                // Külső ragyogás
+                ctx.strokeStyle = `rgba(255, 255, 100, ${alpha * 0.3})`;
+                ctx.lineWidth = this.width * 2;
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+            }
+        }
+
+        // Nebula class
+        class Nebula {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = 100 + Math.random() * 200;
+                this.vx = (Math.random() - 0.5) * 0.1;
+                this.vy = (Math.random() - 0.5) * 0.1;
+                this.opacity = 0.1 + Math.random() * 0.15;
+
+                // Színes ködök
+                const colors = [
+                    { r: 138, g: 43, b: 226 },  // Lila
+                    { r: 255, g: 20, b: 147 },  // Rózsaszín
+                    { r: 0, g: 191, b: 255 },   // Kék
+                    { r: 50, g: 205, b: 50 },   // Zöld
+                    { r: 255, g: 140, b: 0 }    // Narancs
+                ];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.pulseSpeed = 0.005 + Math.random() * 0.01;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.pulsePhase += this.pulseSpeed;
+
+                // Wrap around
+                if (this.x < -this.size) this.x = canvas.width + this.size;
+                if (this.x > canvas.width + this.size) this.x = -this.size;
+                if (this.y < -this.size) this.y = canvas.height + this.size;
+                if (this.y > canvas.height + this.size) this.y = -this.size;
+            }
+
+            draw() {
+                const pulse = Math.sin(this.pulsePhase) * 0.3 + 0.7;
+                const currentOpacity = this.opacity * pulse;
+
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.size
+                );
+                gradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${currentOpacity})`);
+                gradient.addColorStop(0.5, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${currentOpacity * 0.5})`);
+                gradient.addColorStop(1, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`);
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Meteor class - ARCADE MÓD: GYORS HULLÓCSILLAGOK! 🌠
+        class Meteor {
+            constructor(x, y, angle, speed, size) {
+                this.x = x;
+                this.y = y;
+                this.angle = angle;
+                this.speed = speed || (3 + Math.random() * 5); // GYORS!
+                this.size = size || (1 + Math.random() * 2);
+                this.vx = Math.cos(angle) * this.speed;
+                this.vy = Math.sin(angle) * this.speed;
+                this.trail = [];
+                this.maxTrailLength = 30 + Math.random() * 20; // HOSSZÚ CSÓVA! ✨
+                this.life = 0;
+                this.maxLife = 60 + Math.random() * 60; // 1-2 másodperc
+                this.active = true;
+
+                // Meteorok színei: fehér, sárga-fehér, narancs-fehér
+                const colors = [
+                    { r: 255, g: 255, b: 255 }, // Fehér
+                    { r: 255, g: 255, b: 200 }, // Sárga-fehér
+                    { r: 255, g: 220, b: 150 }, // Narancs-fehér
+                    { r: 200, g: 230, b: 255 }  // Kékes-fehér
+                ];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                if (!this.active) return;
+
+                this.life++;
+                if (this.life > this.maxLife) {
+                    this.active = false;
+                    return;
+                }
+
+                // Pozíció frissítése
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Csóva frissítése
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > this.maxTrailLength) {
+                    this.trail.shift();
+                }
+
+                // Képernyőn kívül van?
+                if (this.x < -100 || this.x > canvas.width + 100 ||
+                    this.y < -100 || this.y > canvas.height + 100) {
+                    this.active = false;
+                }
+            }
+
+            draw() {
+                if (!this.active || this.trail.length === 0) return;
+
+                const fadeAlpha = Math.min(1, (this.maxLife - this.life) / 20);
+
+                // Csóva rajzolása (trail)
+                for (let i = 0; i < this.trail.length - 1; i++) {
+                    const alpha = (i / this.trail.length) * fadeAlpha;
+                    const size = this.size * (i / this.trail.length);
+
+                    // Külső fényes aura
+                    const gradient = ctx.createRadialGradient(
+                        this.trail[i].x, this.trail[i].y, 0,
+                        this.trail[i].x, this.trail[i].y, size * 3
+                    );
+                    gradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${alpha})`);
+                    gradient.addColorStop(0.5, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${alpha * 0.5})`);
+                    gradient.addColorStop(1, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`);
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(this.trail[i].x, this.trail[i].y, size * 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Meteor fej (nagyon fényes!)
+                const headGradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.size * 4
+                );
+                headGradient.addColorStop(0, `rgba(255, 255, 255, ${fadeAlpha})`);
+                headGradient.addColorStop(0.3, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${fadeAlpha * 0.8})`);
+                headGradient.addColorStop(1, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`);
+
+                ctx.fillStyle = headGradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Belső mag (extra fényes)
+                ctx.fillStyle = `rgba(255, 255, 255, ${fadeAlpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // MeteorShower class - ARCADE MÓD: METEORRAJ! 💫💫💫
+        class MeteorShower {
+            constructor() {
+                // Radiant pont (ahonnan a meteorok "jönnek")
+                // ARCADE: Változatos irányok!
+                const side = Math.floor(Math.random() * 4);
+
+                if (side === 0) { // Felülről
+                    this.radiantX = Math.random() * canvas.width;
+                    this.radiantY = -200;
+                    this.baseAngle = Math.PI / 2; // Lefelé
+                } else if (side === 1) { // Jobbról
+                    this.radiantX = canvas.width + 200;
+                    this.radiantY = Math.random() * canvas.height;
+                    this.baseAngle = Math.PI; // Balra
+                } else if (side === 2) { // Alulról
+                    this.radiantX = Math.random() * canvas.width;
+                    this.radiantY = canvas.height + 200;
+                    this.baseAngle = -Math.PI / 2; // Felfelé
+                } else { // Balról
+                    this.radiantX = -200;
+                    this.radiantY = Math.random() * canvas.height;
+                    this.baseAngle = 0; // Jobbra
+                }
+
+                this.meteorCount = 30 + Math.floor(Math.random() * 30); // 30-60 meteor! 💥
+                this.meteorsSpawned = 0;
+                this.spawnInterval = 3; // Új meteor minden 3. frame-ben
+                this.frameCounter = 0;
+                this.active = true;
+            }
+
+            update(meteors) {
+                if (!this.active) return;
+
+                this.frameCounter++;
+
+                // Új meteor létrehozása
+                if (this.frameCounter >= this.spawnInterval && this.meteorsSpawned < this.meteorCount) {
+                    // Kis szórás a radiant körül (realistikus meteorraj hatás)
+                    const angleSpread = 0.3; // radián
+                    const angle = this.baseAngle + (Math.random() - 0.5) * angleSpread;
+
+                    // Pozíció kis véletlenséggel a radiant körül
+                    const spread = 100;
+                    const startX = this.radiantX + (Math.random() - 0.5) * spread;
+                    const startY = this.radiantY + (Math.random() - 0.5) * spread;
+
+                    // Sebesség változtatása (3-8 pixel/frame)
+                    const speed = 3 + Math.random() * 5;
+                    const size = 0.8 + Math.random() * 1.5;
+
+                    meteors.push(new Meteor(startX, startY, angle, speed, size));
+
+                    this.meteorsSpawned++;
+                    this.frameCounter = 0;
+                }
+
+                // Ha minden meteor létrejött, a raj befejeződött
+                if (this.meteorsSpawned >= this.meteorCount) {
+                    this.active = false;
+                }
+            }
+        }
+
+        const planets = planetsData.map(data => new Planet(data));
+
+        // Zoom state
+        let zoomLevel = 1;
+        let targetZoom = 1;
+        let zoomTarget = null;
+        let cameraX = 0;
+        let cameraY = 0;
+        let targetCameraX = 0;
+        let targetCameraY = 0;
+
+        // Create asteroid belt
+        const asteroids = [];
+        for (let i = 0; i < 150; i++) {
+            asteroids.push(new Asteroid());
+        }
+
+        // Create comets
+        const comets = [];
+        let cometTimer = 0;
+
+        // Create explosions (when comets hit the sun)
+        const explosions = [];
+
+        // Create solar flares
+        const solarFlares = [];
+        let flareTimer = 0;
+
+        // Create nebulas
+        const nebulas = [];
+        for (let i = 0; i < 5; i++) {
+            nebulas.push(new Nebula());
+        }
+
+        // Create meteors and meteor showers - ARCADE MÓD! 💫
+        const meteors = [];
+        const meteorShowers = [];
+        let meteorShowerTimer = 0;
+
+        // Draw stars with parallax layers (3D depth)
+        const starLayers = [
+            { stars: [], depth: 0.3, count: 50 },   // Far background
+            { stars: [], depth: 0.6, count: 100 },  // Middle
+            { stars: [], depth: 1.0, count: 50 }    // Foreground
+        ];
+
+        starLayers.forEach(layer => {
+            for (let i = 0; i < layer.count; i++) {
+                layer.stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 * layer.depth,
+                    brightness: Math.random(),
+                    twinkleSpeed: Math.random() * 0.05
+                });
+            }
+        });
+
+        function drawStars() {
+            starLayers.forEach(layer => {
+                layer.stars.forEach(star => {
+                    // Twinkling effect
+                    star.brightness += (Math.random() - 0.5) * star.twinkleSpeed;
+                    star.brightness = Math.max(0.3, Math.min(1, star.brightness));
+
+                    const alpha = star.brightness * layer.depth;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Add glow to larger stars
+                    if (star.size > 1.2) {
+                        const glowGradient = ctx.createRadialGradient(
+                            star.x, star.y, 0,
+                            star.x, star.y, star.size * 2
+                        );
+                        glowGradient.addColorStop(0, `rgba(255, 255, 255, ${alpha * 0.5})`);
+                        glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                        ctx.fillStyle = glowGradient;
+                        ctx.beginPath();
+                        ctx.arc(star.x, star.y, star.size * 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            });
+        }
+
+        function drawSun() {
+            // Outer corona (3D glow layers)
+            const corona1 = ctx.createRadialGradient(sun.x, sun.y, sun.radius, sun.x, sun.y, sun.radius * 3);
+            corona1.addColorStop(0, 'rgba(255, 220, 0, 0.4)');
+            corona1.addColorStop(0.3, 'rgba(255, 140, 0, 0.3)');
+            corona1.addColorStop(0.6, 'rgba(255, 69, 0, 0.15)');
+            corona1.addColorStop(1, 'rgba(255, 50, 0, 0)');
+
+            ctx.fillStyle = corona1;
+            ctx.beginPath();
+            ctx.arc(sun.x, sun.y, sun.radius * 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Inner glow
+            const corona2 = ctx.createRadialGradient(sun.x, sun.y, sun.radius * 0.5, sun.x, sun.y, sun.radius * 1.8);
+            corona2.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+            corona2.addColorStop(0.4, 'rgba(255, 240, 100, 0.8)');
+            corona2.addColorStop(0.7, 'rgba(255, 200, 0, 0.5)');
+            corona2.addColorStop(1, 'rgba(255, 100, 0, 0)');
+
+            ctx.fillStyle = corona2;
+            ctx.beginPath();
+            ctx.arc(sun.x, sun.y, sun.radius * 1.8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Main sun body (3D sphere)
+            const sunGradient = ctx.createRadialGradient(
+                sun.x - sun.radius * 0.3, sun.y - sun.radius * 0.3, sun.radius * 0.1,
+                sun.x, sun.y, sun.radius * 1.2
+            );
+            sunGradient.addColorStop(0, '#fffef0');
+            sunGradient.addColorStop(0.2, '#fff9c4');
+            sunGradient.addColorStop(0.4, '#ffeb3b');
+            sunGradient.addColorStop(0.6, '#ffc107');
+            sunGradient.addColorStop(0.8, '#ff9800');
+            sunGradient.addColorStop(1, '#ff6f00');
+
+            ctx.fillStyle = sunGradient;
+            ctx.beginPath();
+            ctx.arc(sun.x, sun.y, sun.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bright highlight (specular)
+            const highlight = ctx.createRadialGradient(
+                sun.x - sun.radius * 0.25, sun.y - sun.radius * 0.25, 0,
+                sun.x - sun.radius * 0.25, sun.y - sun.radius * 0.25, sun.radius * 0.4
+            );
+            highlight.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+            highlight.addColorStop(0.5, 'rgba(255, 255, 200, 0.5)');
+            highlight.addColorStop(1, 'rgba(255, 255, 200, 0)');
+
+            ctx.fillStyle = highlight;
+            ctx.beginPath();
+            ctx.arc(sun.x, sun.y, sun.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sun label
+            if (showLabels) {
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                ctx.shadowBlur = 4;
+                ctx.fillText('☀️ Nap', sun.x, sun.y + sun.radius + 25);
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        function animate() {
+            // Update camera to follow zoomed planet
+            if (zoomTarget) {
+                const pos = zoomTarget.getPosition();
+                targetCameraX = canvas.width / 2 - pos.x;
+                targetCameraY = canvas.height / 2 - pos.y;
+            }
+
+            // Smooth zoom transition
+            zoomLevel += (targetZoom - zoomLevel) * 0.1;
+            cameraX += (targetCameraX - cameraX) * 0.1;
+            cameraY += (targetCameraY - cameraY) * 0.1;
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Save state for zoom
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.scale(zoomLevel, zoomLevel);
+            ctx.translate(-canvas.width / 2 + cameraX, -canvas.height / 2 + cameraY);
+
+            // Draw nebulas (in background)
+            nebulas.forEach(nebula => {
+                nebula.update();
+                nebula.draw();
+            });
+
+            drawStars();
+
+            // Draw solar flares
+            flareTimer++;
+            if (flareTimer > 100 && Math.random() < 0.02) {
+                solarFlares.push(new SolarFlare());
+                flareTimer = 0;
+            }
+
+            for (let i = solarFlares.length - 1; i >= 0; i--) {
+                if (!solarFlares[i].update()) {
+                    solarFlares.splice(i, 1);
+                } else {
+                    solarFlares[i].draw();
+                }
+            }
+
+            drawSun();
+
+            // Draw and update asteroids
+            asteroids.forEach(asteroid => {
+                asteroid.update(orbitSpeed);
+                asteroid.draw();
+            });
+
+            // Draw and update planets
+            planets.forEach(planet => {
+                planet.update(orbitSpeed);
+                planet.draw();
+            });
+
+            // Comet spawning - ARCADE MÓD: GYAKORI ÜSTÖKÖSÖK! 💫
+            cometTimer++;
+            const frequencyThreshold = 60 / cometFrequency; // Magasabb gyakoriság = rövidebb várakozás
+            const spawnProbability = 0.05 * cometFrequency; // Magasabb gyakoriság = nagyobb esély
+            if (cometTimer > frequencyThreshold && Math.random() < spawnProbability) {
+                const comet = new Comet();
+                comets.push(comet);
+                cometTimer = 0;
+            }
+
+            // Update and draw comets
+            for (let i = comets.length - 1; i >= 0; i--) {
+                const explosion = comets[i].update();
+                comets[i].draw();
+
+                // Ha robbanás történt (üstökös becsapódott a Napba)
+                if (explosion) {
+                    explosions.push(explosion);
+                }
+
+                if (!comets[i].active) {
+                    comets.splice(i, 1);
+                }
+            }
+
+            // Update and draw explosions
+            for (let i = explosions.length - 1; i >= 0; i--) {
+                if (!explosions[i].update()) {
+                    explosions.splice(i, 1);
+                } else {
+                    explosions[i].draw();
+                }
+            }
+
+            // ARCADE: METEORRAJ SPAWNING! 💫💫💫
+            meteorShowerTimer++;
+            if (meteorShowerTimer > 1200 && Math.random() < 0.03) { // Meteor shower minden ~20-40 másodpercben
+                meteorShowers.push(new MeteorShower());
+                meteorShowerTimer = 0;
+            }
+
+            // Update meteor showers (ezek létrehozzák a meteorokat)
+            for (let i = meteorShowers.length - 1; i >= 0; i--) {
+                meteorShowers[i].update(meteors);
+                if (!meteorShowers[i].active) {
+                    meteorShowers.splice(i, 1);
+                }
+            }
+
+            // Update and draw meteors (ezek az egyedi hullócsillagok)
+            for (let i = meteors.length - 1; i >= 0; i--) {
+                meteors[i].update();
+                if (!meteors[i].active) {
+                    meteors.splice(i, 1);
+                } else {
+                    meteors[i].draw();
+                }
+            }
+
+            ctx.restore(); // Restore zoom state
+
+            requestAnimationFrame(animate);
+        }
+
+        // Click handler
+        let lastClickTime = 0;
+        let lastClickedPlanet = null;
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const now = Date.now();
+            const timeSinceLastClick = now - lastClickTime;
+
+            planets.forEach(planet => {
+                if (planet.isClicked(mouseX, mouseY)) {
+                    showPlanetInfo(planet);
+
+                    // Dupla kattintás zoomhoz
+                    if (timeSinceLastClick < 300 && lastClickedPlanet === planet) {
+                        zoomToPlanet(planet);
+                    }
+                    lastClickedPlanet = planet;
+                    lastClickTime = now;
+                }
+            });
+        });
+
+        // Zoom functions
+        function zoomToPlanet(planet) {
+            if (zoomTarget === planet) {
+                // Ha már erre van zoomolva, zoom out
+                resetZoom();
+            } else {
+                zoomTarget = planet;
+                targetZoom = 3;
+                const pos = planet.getPosition();
+                targetCameraX = canvas.width / 2 - pos.x;
+                targetCameraY = canvas.height / 2 - pos.y;
+            }
+        }
+
+        function resetZoom() {
+            zoomTarget = null;
+            targetZoom = 1;
+            targetCameraX = 0;
+            targetCameraY = 0;
+        }
+
+        function zoomIn() {
+            targetZoom = Math.min(targetZoom + 0.5, 5);
+        }
+
+        function zoomOut() {
+            targetZoom = Math.max(targetZoom - 0.5, 0.5);
+            if (targetZoom === 1) {
+                resetZoom();
+            }
+        }
+
+        // Mouse wheel zoom
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                zoomIn();
+            } else {
+                zoomOut();
+            }
+        }, { passive: false });
+
+        function showPlanetInfo(planet) {
+            document.getElementById('planetEmoji').textContent = planet.emoji;
+            document.getElementById('planetName').textContent = planet.name;
+
+            let moonsText = '';
+            if (planet.moons.length > 0) {
+                const moonNames = planet.moons.map(m => m.name).join(', ');
+                moonsText = `<p><strong>🌙 Holdak:</strong> ${moonNames}</p>`;
+            }
+
+            document.getElementById('planetDetails').innerHTML = `
+                <p><strong>📏 Távolság a Naptól:</strong> ${planet.facts.distance}</p>
+                <p><strong>⏰ Nap hossza:</strong> ${planet.facts.dayLength}</p>
+                ${moonsText}
+                <div class="fun-fact">
+                    <strong>💡 Érdekes tény:</strong><br>
+                    ${planet.facts.funFact}
+                </div>
+            `;
+            document.getElementById('planetInfo').classList.add('active');
+        }
+
+        function closePlanetInfo() {
+            document.getElementById('planetInfo').classList.remove('active');
+        }
+
+        function toggleLabels() {
+            showLabels = !showLabels;
+        }
+
+        function toggleOrbits() {
+            showOrbits = !showOrbits;
+        }
+
+        function toggleMoons() {
+            showMoons = !showMoons;
+        }
+
+        // Speed control
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            orbitSpeed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = orbitSpeed.toFixed(1);
+        });
+
+        // Comet frequency control
+        document.getElementById('cometFrequencySlider').addEventListener('input', (e) => {
+            cometFrequency = parseFloat(e.target.value);
+            document.getElementById('cometFrequencyValue').textContent = cometFrequency.toFixed(1);
+        });
+
+        // Comet speed control
+        document.getElementById('cometSpeedSlider').addEventListener('input', (e) => {
+            cometSpeed = parseFloat(e.target.value);
+            document.getElementById('cometSpeedValue').textContent = cometSpeed.toFixed(1);
+        });
+
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
